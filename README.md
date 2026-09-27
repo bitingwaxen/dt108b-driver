@@ -42,7 +42,7 @@ chmod +x install.sh
 sudo ./install.sh
 ```
 
-Queue: `DT108B_Labels`
+Queue: `DT108B_Gap`
 
 Description shown to clients: `DT108B 4x6 Label Printer`
 
