@@ -1,7 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
-QUEUE="DT108B_Labels"
+QUEUE_GAP="DT108B_Gap"
+QUEUE_NOTCH="DT108B_Notch"
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 
 if [ "$(id -u)" -ne 0 ]; then exec sudo "$0" "$@"; fi
@@ -44,17 +45,33 @@ echo "[7/9] Enabling CUPS and Avahi..."
 systemctl enable --now cups avahi-daemon
 cupsctl --share-printers || true
 
-echo "[8/9] Creating CUPS queue..."
-cancel -a "$QUEUE" 2>/dev/null || true
-lpadmin -x "$QUEUE" 2>/dev/null || true
-lpadmin -p "$QUEUE" -E -D "DT108B 4x6 Label Printer" -v "dt108b:/usb" -P "/usr/share/ppd/dt108b/DT108B.ppd"
-lpadmin -p "$QUEUE" -o printer-is-shared=true
-lpadmin -p "$QUEUE" -o PageSize=Label4x6
-lpadmin -p "$QUEUE" -o DTMediaMode=Gap
-lpadmin -p "$QUEUE" -o DTGapSize=4mm
-lpadmin -p "$QUEUE" -o DTDensity=8
-cupsenable "$QUEUE"
-cupsaccept "$QUEUE"
+echo "[8/9] Creating CUPS queues..."
+
+for QUEUE in "$QUEUE_GAP" "$QUEUE_NOTCH"; do
+  cancel -a "$QUEUE" 2>/dev/null || true
+  lpadmin -x "$QUEUE" 2>/dev/null || true
+done
+
+lpadmin   -p "$QUEUE_GAP"   -E   -D "DT108B 4x6 — Gap"   -v "dt108b:/usb"   -P "/usr/share/ppd/dt108b/DT108B.ppd"
+
+lpadmin -p "$QUEUE_GAP" -o printer-is-shared=true
+lpadmin -p "$QUEUE_GAP" -o PageSize=Label4x6
+lpadmin -p "$QUEUE_GAP" -o DTMediaMode=Gap
+lpadmin -p "$QUEUE_GAP" -o DTGapSize=4mm
+lpadmin -p "$QUEUE_GAP" -o DTDensity=8
+cupsenable "$QUEUE_GAP"
+cupsaccept "$QUEUE_GAP"
+
+lpadmin   -p "$QUEUE_NOTCH"   -E   -D "DT108B 4x6 — Notch"   -v "dt108b:/usb"   -P "/usr/share/ppd/dt108b/DT108B.ppd"
+
+lpadmin -p "$QUEUE_NOTCH" -o printer-is-shared=true
+lpadmin -p "$QUEUE_NOTCH" -o PageSize=Label4x6
+lpadmin -p "$QUEUE_NOTCH" -o DTMediaMode=Notch
+lpadmin -p "$QUEUE_NOTCH" -o DTGapSize=4mm
+lpadmin -p "$QUEUE_NOTCH" -o DTDensity=8
+cupsenable "$QUEUE_NOTCH"
+cupsaccept "$QUEUE_NOTCH"
+
 systemctl restart cups avahi-daemon
 sleep 2
 
@@ -65,12 +82,15 @@ echo
 echo "Worker:"
 systemctl --no-pager --full status dt108b-worker.service | head -20 || true
 echo
-echo "Printer:"
-lpstat -p "$QUEUE" -l
-lpstat -v "$QUEUE"
+echo "Printers:"
+lpstat -p "$QUEUE_GAP" -l
+lpstat -p "$QUEUE_NOTCH" -l
+lpstat -v "$QUEUE_GAP"
+lpstat -v "$QUEUE_NOTCH"
 echo
 echo "Defaults:"
-lpoptions -p "$QUEUE"
+lpoptions -p "$QUEUE_GAP"
+lpoptions -p "$QUEUE_NOTCH"
 echo
 echo "AirPrint discovery:"
 avahi-browse -rt _universal._sub._ipp._tcp 2>/dev/null | grep -A12 -B2 -i DT108B || true
