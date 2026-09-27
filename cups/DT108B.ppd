@@ -1,0 +1,38 @@
+*PPD-Adobe: "4.3"
+*FormatVersion: "4.3"
+*FileVersion: "1.0"
+*LanguageVersion: English
+*LanguageEncoding: ISOLatin1
+*PCFileName: "DT108B.PPD"
+*Manufacturer: "MHT / 4BARCODE"
+*Product: "(DT108B Direct)"
+*ModelName: "DT108B Direct USB Label Printer"
+*NickName: "DT108B Direct USB Label Printer"
+*ShortNickName: "DT108B Direct"
+*cupsVersion: 1.7
+*cupsManualCopies: True
+*cupsFilter2: "application/pdf application/vnd.dt108b-pdf 0 -"
+*cupsSingleFile: False
+*LanguageLevel: "3"
+*ColorDevice: False
+*DefaultColorSpace: Gray
+*FileSystem: False
+*Throughput: "1"
+*OpenUI *PageSize/Media Size: PickOne
+*OrderDependency: 10 AnySetup *PageSize
+*DefaultPageSize: Label4x6
+*PageSize Label4x6/4 x 6 in: "<</PageSize[288 432]>>setpagedevice"
+*CloseUI: *PageSize
+*OpenUI *PageRegion/Media Size: PickOne
+*OrderDependency: 10 AnySetup *PageRegion
+*DefaultPageRegion: Label4x6
+*PageRegion Label4x6/4 x 6 in: "<</PageSize[288 432]>>setpagedevice"
+*CloseUI: *PageRegion
+*DefaultImageableArea: Label4x6
+*ImageableArea Label4x6/4 x 6 in: "0 0 288 432"
+*DefaultPaperDimension: Label4x6
+*PaperDimension Label4x6/4 x 6 in: "288 432"
+*DefaultResolution: 203dpi
+*Resolution 203dpi/203 DPI: "<</HWResolution[203 203]>>setpagedevice"
+*DefaultFont: Courier
+*Font Courier: Standard "(001.007)" Standard ROM
