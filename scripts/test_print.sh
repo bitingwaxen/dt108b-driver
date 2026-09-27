@@ -8,4 +8,4 @@ lp -d "$QUEUE" "$PDF"
 sleep 5
 echo; echo "=== Queue ==="; lpstat -p "$QUEUE" -l || true
 echo; echo "=== Active jobs ==="; lpstat -o "$QUEUE" || true
-echo; echo "=== Worker log ==="; sudo tail -30 /var/log/dt108b-worker.log || true
+echo; echo "=== Worker log ==="; tail -30 /var/log/dt108b-worker.log || true
