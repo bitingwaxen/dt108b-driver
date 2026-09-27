@@ -1,0 +1,55 @@
+#!/bin/sh
+set -eu
+
+SPOOL="/var/spool/dt108b/incoming"
+
+if [ "$#" -eq 0 ]; then
+    echo 'direct dt108b:/usb "MHT DT108B" "DT108B 4x6 USB Label Printer"'
+    exit 0
+fi
+
+JOB_ID="${1:-0}"
+USER_NAME="${2:-unknown}"
+TITLE="${3:-Untitled}"
+COPIES="${4:-1}"
+OPTIONS="${5:-}"
+
+get_option() {
+    key="$1"
+    printf '%s\n' "$OPTIONS" | tr ' ' '\n' | sed -n "s/^${key}=//p" | tail -n 1
+}
+
+MODE="$(get_option DTMediaMode || true)"
+GAP="$(get_option DTGapSize || true)"
+DENSITY="$(get_option DTDensity || true)"
+
+[ -n "$MODE" ] || MODE="default"
+[ -n "$GAP" ] || GAP="default"
+[ -n "$DENSITY" ] || DENSITY="default"
+
+sanitize() { printf '%s' "$1" | tr -cd 'A-Za-z0-9_.-'; }
+MODE="$(sanitize "$MODE")"
+GAP="$(sanitize "$GAP")"
+DENSITY="$(sanitize "$DENSITY")"
+
+STAMP="$(date +%s)"
+TMP="$SPOOL/.dt108b-${JOB_ID}-$$.tmp"
+FINAL="$SPOOL/dt108b-${STAMP}_${JOB_ID}_${COPIES}_${MODE}_${GAP}_${DENSITY}.pdf"
+
+cleanup() {
+    if [ -f "$TMP" ]; then rm -f "$TMP"; fi
+    return 0
+}
+trap cleanup EXIT INT TERM
+
+if [ "$#" -ge 6 ] && [ -r "${6:-}" ]; then
+    cat "$6" > "$TMP"
+else
+    cat > "$TMP"
+fi
+
+chmod 640 "$TMP"
+mv "$TMP" "$FINAL"
+echo "INFO: DT108B queued job $JOB_ID ($TITLE by $USER_NAME)" >&2
+echo "PAGE: total 1" >&2
+exit 0
