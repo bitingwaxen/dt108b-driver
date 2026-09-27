@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 PDF="${1:-}"
-QUEUE="${DT108B_QUEUE:-DT108B_Labels}"
+QUEUE="${DT108B_QUEUE:-DT108B_Gap}"
 if [ -z "$PDF" ] || [ ! -f "$PDF" ]; then echo "Usage: $0 /path/to/label.pdf"; exit 2; fi
 echo "Submitting through CUPS queue: $QUEUE"
 lp -d "$QUEUE" "$PDF"
