@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dt108b-macos-driver"
+version = "1.2.0"
+description = "Direct USB printing and a macOS CUPS virtual printer for MHT DT108B / 4BARCODE 4B-2054F"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [{name = "Andrew / Picky Bear"}]
+dependencies = [
+  "pyusb>=1.2.1",
+  "PyMuPDF>=1.24.0",
+  "Pillow>=10.0.0",
+]
+
+[project.scripts]
+dt108b-print = "dt108b.cli:main"
+dt108b-diagnose = "dt108b.cli:diagnose_main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
