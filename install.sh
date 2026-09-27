@@ -47,6 +47,10 @@ cupsctl --share-printers || true
 
 echo "[8/9] Creating CUPS queues..."
 
+# Remove the old single-queue name from pre dual-AirPrint builds.
+cancel -a DT108B_Labels 2>/dev/null || true
+lpadmin -x DT108B_Labels 2>/dev/null || true
+
 for QUEUE in "$QUEUE_GAP" "$QUEUE_NOTCH"; do
   cancel -a "$QUEUE" 2>/dev/null || true
   lpadmin -x "$QUEUE" 2>/dev/null || true
