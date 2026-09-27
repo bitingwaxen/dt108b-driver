@@ -1,0 +1,44 @@
+#!/bin/bash
+set -eu
+
+QUEUE_DIR="${TMPDIR:-/private/var/spool/cups/tmp}"
+
+if [ "$#" -eq 0 ]; then
+  echo 'direct dt108b:/direct "MHT DT108B / 4BARCODE 4B-2054F" "DT108B Direct USB Label Printer"'
+  exit 0
+fi
+
+JOB_ID="${1:-0}"
+USER_NAME="${2:-unknown}"
+TITLE="${3:-Untitled}"
+COPIES="${4:-1}"
+
+if [ ! -d "$QUEUE_DIR" ] || [ ! -w "$QUEUE_DIR" ]; then
+  echo "ERROR: CUPS TMPDIR is not writable: $QUEUE_DIR" >&2
+  exit 1
+fi
+
+STAMP="$(date +%s)"
+TMP="$QUEUE_DIR/.dt108b-${JOB_ID}-$$.tmp"
+FINAL="$QUEUE_DIR/dt108b-${STAMP}_${JOB_ID}_${COPIES}.pdf"
+
+cleanup() {
+  if [ -f "$TMP" ]; then
+    rm -f "$TMP"
+  fi
+  return 0
+}
+trap cleanup EXIT INT TERM
+
+if [ "$#" -ge 6 ] && [ -r "${6:-}" ]; then
+  cat "$6" > "$TMP"
+else
+  cat > "$TMP"
+fi
+
+chmod 644 "$TMP"
+mv "$TMP" "$FINAL"
+
+echo "INFO: Queued DT108B job $JOB_ID ($TITLE by $USER_NAME), copies=$COPIES" >&2
+echo "PAGE: total 1" >&2
+exit 0
