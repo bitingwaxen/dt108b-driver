@@ -1,0 +1,19 @@
+[Unit]
+Description=DT108B USB label printer worker
+After=multi-user.target
+
+[Service]
+Type=simple
+ExecStart=/opt/dt108b/venv/bin/dt108b-worker
+Restart=always
+RestartSec=1
+User=root
+Group=root
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/var/spool/dt108b /var/log /dev/bus/usb
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target
