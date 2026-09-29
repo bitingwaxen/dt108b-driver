@@ -88,6 +88,86 @@ fi
 systemctl enable --now cups avahi-daemon
 cupsctl --share-printers || true
 
+# Do not let CUPS auto-advertise the queues with TLS/IPPS metadata.
+# iOS was able to discover the queues and fetch IPP attributes, but its
+# printer-information phase repeatedly terminated the CUPS TLS session.
+# We advertise explicit plain-IPP AirPrint records through Avahi instead.
+python3 - <<'PY'
+from pathlib import Path
+
+path = Path("/etc/cups/cupsd.conf")
+lines = path.read_text().splitlines()
+result = []
+seen_browsing = False
+seen_local = False
+
+for line in lines:
+    stripped = line.strip().lower()
+    if stripped.startswith("browsing "):
+        result.append("Browsing No")
+        seen_browsing = True
+    elif stripped.startswith("browselocalprotocols "):
+        result.append("BrowseLocalProtocols none")
+        seen_local = True
+    else:
+        result.append(line)
+
+if not seen_browsing:
+    result.append("Browsing No")
+if not seen_local:
+    result.append("BrowseLocalProtocols none")
+
+path.write_text("\n".join(result) + "\n")
+PY
+
+install -d -o root -g root -m 755 /etc/avahi/services
+
+cat > /etc/avahi/services/dt108b-gap.service <<'EOF'
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE service-group SYSTEM "avahi-service.dtd">
+<service-group>
+  <name>DT108B Gap</name>
+  <service>
+    <type>_ipp._tcp</type>
+    <subtype>_universal._sub._ipp._tcp</subtype>
+    <port>631</port>
+    <txt-record>txtvers=1</txt-record>
+    <txt-record>qtotal=1</txt-record>
+    <txt-record>rp=printers/DT108B_Gap</txt-record>
+    <txt-record>ty=DT108B 4x6 Label Printer</txt-record>
+    <txt-record>product=(DT108B)</txt-record>
+    <txt-record>pdl=application/pdf,image/urf,image/pwg-raster</txt-record>
+    <txt-record>URF=V1.4,CP1,W8,PQ4,RS203,FN3</txt-record>
+    <txt-record>Color=F</txt-record>
+    <txt-record>Duplex=F</txt-record>
+    <txt-record>note=Gap labels</txt-record>
+  </service>
+</service-group>
+EOF
+
+cat > /etc/avahi/services/dt108b-notch.service <<'EOF'
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE service-group SYSTEM "avahi-service.dtd">
+<service-group>
+  <name>DT108B Notch</name>
+  <service>
+    <type>_ipp._tcp</type>
+    <subtype>_universal._sub._ipp._tcp</subtype>
+    <port>631</port>
+    <txt-record>txtvers=1</txt-record>
+    <txt-record>qtotal=1</txt-record>
+    <txt-record>rp=printers/DT108B_Notch</txt-record>
+    <txt-record>ty=DT108B 4x6 Label Printer</txt-record>
+    <txt-record>product=(DT108B)</txt-record>
+    <txt-record>pdl=application/pdf,image/urf,image/pwg-raster</txt-record>
+    <txt-record>URF=V1.4,CP1,W8,PQ4,RS203,FN3</txt-record>
+    <txt-record>Color=F</txt-record>
+    <txt-record>Duplex=F</txt-record>
+    <txt-record>note=Notch / hole labels</txt-record>
+  </service>
+</service-group>
+EOF
+
 echo "[8/9] Creating CUPS queues..."
 
 # Remove the old single-queue name from pre dual-AirPrint builds.
