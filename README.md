@@ -115,3 +115,33 @@ sudo ./uninstall.sh
 ```
 
 The uninstall removes only DT108B-specific files and leaves CUPS, Avahi, Python and other Debian packages installed so the machine can later host the Epson TM-T88 as well.
+
+
+## Cold-boot reliability on the isolated Wi-Fi AP
+
+The installer sets the server hostname to `printserver`, ensures that it
+resolves locally through:
+
+```text
+127.0.1.1 printserver
+```
+
+and configures:
+
+```text
+HostNameLookups Off
+```
+
+in CUPS.
+
+This prevents a cold-boot failure mode where `cupsd` is shown as active and
+listening on port 631 but HTTP/IPP requests and `lpstat` hang because the
+machine cannot resolve its own hostname on the no-internet print Wi-Fi network.
+
+Quick check:
+
+```bash
+getent hosts printserver
+curl -m 5 -I http://127.0.0.1:631/
+lpstat -p
+```
