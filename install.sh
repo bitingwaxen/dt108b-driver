@@ -41,7 +41,50 @@ install -o root -g root -m 644 "$ROOT/systemd/dt108b-worker.service" /etc/system
 systemctl daemon-reload
 systemctl enable --now dt108b-worker.service
 
-echo "[7/9] Enabling CUPS and Avahi..."
+echo "[7/9] Configuring hostname, CUPS, and Avahi..."
+
+PRINTSERVER_HOSTNAME="${PRINTSERVER_HOSTNAME:-printserver}"
+
+# Ensure the local hostname always resolves even when this box is running as
+# an isolated Wi-Fi access point with no upstream DNS. Without this, cupsd can
+# accept TCP connections on port 631 but block while trying to resolve its own
+# hostname after a cold boot.
+hostnamectl set-hostname "$PRINTSERVER_HOSTNAME"
+
+python3 - "$PRINTSERVER_HOSTNAME" <<'PY'
+from pathlib import Path
+import sys
+
+hostname = sys.argv[1]
+path = Path("/etc/hosts")
+lines = path.read_text().splitlines()
+
+result = []
+replaced = False
+
+for line in lines:
+    stripped = line.strip()
+    if stripped.startswith("127.0.1.1"):
+        if not replaced:
+            result.append(f"127.0.1.1\t{hostname}")
+            replaced = True
+        continue
+    result.append(line)
+
+if not replaced:
+    result.append(f"127.0.1.1\t{hostname}")
+
+path.write_text("\n".join(result) + "\n")
+PY
+
+# Avoid reverse-DNS lookups for local AirPrint clients. This is important on
+# the print server's isolated AP network where no DNS server is advertised.
+if grep -qE '^[[:space:]]*HostNameLookups[[:space:]]+' /etc/cups/cupsd.conf; then
+  sed -i -E 's/^[[:space:]]*HostNameLookups[[:space:]]+.*/HostNameLookups Off/' /etc/cups/cupsd.conf
+else
+  printf '\nHostNameLookups Off\n' >> /etc/cups/cupsd.conf
+fi
+
 systemctl enable --now cups avahi-daemon
 cupsctl --share-printers || true
 
